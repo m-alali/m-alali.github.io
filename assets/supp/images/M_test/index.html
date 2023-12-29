@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Webcam Recording and Slideshow Demo</title>
+    <style>
+      #slideshow {
+        display: none;
+        width: 1280px;
+        height: 960px;
+      }
+      #slideshow img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="startButton">Start Recording and Slideshow</button>
+    <button id="stopButton" disabled>Stop Recording</button>
+    <div id="slideshow">
+      <img src="./images/Image1.jpg">
+      <img src="./images/image2.png">
+      <img src="./images/image3.jpg">
+      <img src="./images/image4.jpeg">
+      <img src="./images/image5.jpg">
+    </div>
+    <video id="recordedVideo" width="1280" height="960" autoplay loop></video>
+    <script>
+      let mediaRecorder;
+      let chunks = [];
+      let slideshowInterval;
+      const startButton = document.getElementById('startButton');
+	  startButton.style.width = '150px'; // Set the width to 100 pixels
+      startButton.style.height = '60px'; // Set the height to 50 pixels
+startButton.style.backgroundColor = 'red';
+startButton.style.marginRight = '50px';
+	  const stopButton = document.getElementById('stopButton');
+	  stopButton.style.width = '150px'; // Set the width to 100 pixels
+      stopButton.style.height = '60px'; // Set the height to 50 pixels
+stopButton.style.backgroundColor = 'DodgerBlue';
+      const slideshow = document.getElementById('slideshow');
+      const recordedVideo = document.getElementById('recordedVideo');
+
+      // Hide the slideshow and recorded video initially
+      slideshow.style.display = 'none';
+      recordedVideo.style.display = 'none';
+
+      navigator.mediaDevices.getUserMedia({video: true})
+        .then(function(stream) {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = function(e) {
+            chunks.push(e.data);
+          };
+          mediaRecorder.onstop = function(e) {
+            const blob = new Blob(chunks, { 'type' : 'video/mp4;' });
+            chunks = [];
+            const videoURL = window.URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = videoURL;
+            downloadLink.download = 'recorded-video.mp4';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+          };
+        });
+
+      startButton.addEventListener('click', function() {
+        mediaRecorder.start();
+        startButton.disabled = true;
+        stopButton.disabled = false;
+        // Show the slideshow after starting recording
+        slideshow.style.display = 'block';
+        // Start the slideshow
+        let currentSlide = 0;
+        const slides = slideshow.getElementsByTagName('img');
+        slides[currentSlide].style.display = 'block';
+        slideshowInterval = setInterval(function() {
+          slides[currentSlide].style.display = 'none';
+          currentSlide = (currentSlide + 1) % slides.length;
+          slides[currentSlide].style.display = 'block';
+        }, 3000); // Change slides every 3 seconds
+      });
+
+      stopButton.addEventListener('click', function() {
+        mediaRecorder.stop();
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        // Hide the slideshow after stopping recording
+        slideshow.style.display = 'none';
+        // Stop the slideshow
+        clearInterval(slideshowInterval);
+        const slides = slideshow.getElementsByTagName('img');
+        for (let i = 0; i < slides.length; i++) {
+          slides[i].style.display = 'none';
+        }
+      });
+    </script>
+  </body>
+</html>
